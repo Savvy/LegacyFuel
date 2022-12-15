@@ -11,8 +11,8 @@ Config.FuelDecor = "_FUEL_LEVEL"
 Config.DisableKeys = {0, 22, 23, 24, 29, 30, 31, 37, 44, 56, 82, 140, 166, 167, 168, 170, 288, 289, 311, 323}
 
 -- Configure blips here. Turn both to false to disable blips all together.
-Config.ShowNearestGasStationOnly = true
-Config.ShowAllGasStations = false
+Config.ShowNearestGasStationOnly = false
+Config.ShowAllGasStations = true
 
 -- Modify the fuel-cost here, using a multiplier value. Setting the value to 2.0 would cause a doubled increase.
 Config.CostMultiplier = 1.0
@@ -40,7 +40,9 @@ Config.PumpModels = {
 	[1933174915] = true,
 	[-462817101] = true,
 	[-469694731] = true,
-	[-164877493] = true
+	[-164877493] = true,
+	[486135101] = true
+	
 }
 
 -- Blacklist certain vehicles. Use names or hashes. https://wiki.gtanet.work/index.php?title=Vehicle_Models

@@ -8,6 +8,17 @@ local currentCash = 0
 local fuelSynced = false
 local inBlacklisted = false
 
+local CurrentWeaponData = {}
+
+AddEventHandler('weapons:client:SetCurrentWeapon', function(data, bool)
+	if bool ~= false then
+		CurrentWeaponData = data
+	else
+		CurrentWeaponData = {}
+	end
+	CanShoot = bool
+end)
+
 function ManageFuelUsage(vehicle)
 	if not DecorExistOn(vehicle, Config.FuelDecor) then
 		SetFuel(vehicle, math.random(200, 800) / 10)
@@ -98,8 +109,9 @@ AddEventHandler('fuel:startFuelUpTick', function(pumpObject, ped, vehicle)
 		if not pumpObject then
 			if GetAmmoInPedWeapon(ped, 883325847) - fuelToAdd * 100 >= 0 then
 				currentFuel = oldFuel + fuelToAdd
-
-				SetPedAmmo(ped, 883325847, math.floor(GetAmmoInPedWeapon(ped, 883325847) - fuelToAdd * 100))
+				local amount = math.floor(GetAmmoInPedWeapon(ped, 883325847) - fuelToAdd * 100)
+				SetPedAmmo(ped, 883325847, amount)
+				TriggerServerEvent("weapons:server:UpdateWeaponAmmo", CurrentWeaponData, amount)
 			else
 				isFueling = false
 			end
@@ -112,7 +124,11 @@ AddEventHandler('fuel:startFuelUpTick', function(pumpObject, ped, vehicle)
 			isFueling = false
 		end
 
- 		if extraCost >= 1 then
+		if not pumpObject then
+			SetFuel(vehicle, currentFuel)
+		end
+
+ 		if pumpObject and extraCost >= 1 then
 			currentCost = currentCost + extraCost
 			todaycost = extraCost
 			if currentCash >= currentCost then
@@ -192,19 +208,19 @@ CreateThread(function()
 
 						if GetSelectedPedWeapon(ped) == 883325847 then
 							stringCoords = vehicleCoords
-
-							if GetAmmoInPedWeapon(ped, 883325847) < 100 then
+							
+							if GetAmmoInPedWeapon(ped, 883325847) <= 40 then -- How much fuel is left in the petrol can
 								canFuel = false
 							end
 						end
 
 						if GetVehicleFuelLevel(vehicle) < 95 and canFuel then
-							if currentCash > 0 then
+							if currentCash > 0 or (GetSelectedPedWeapon(ped) == 883325847 and not isNearPump) then
 								DrawText3Ds(stringCoords.x, stringCoords.y, stringCoords.z + 1.2, Config.Strings.EToRefuel)
 
 								if IsControlJustReleased(0, 38) then
 									isFueling = true
-
+									
 									TriggerEvent('fuel:refuelFromPump', isNearPump, ped, vehicle)
 									LoadAnimDict("timetable@gardener@filling_can")
 								end
@@ -238,8 +254,9 @@ CreateThread(function()
 
 									if IsControlJustReleased(0, 38) then
 										TriggerServerEvent('fuel:pay', refillCost)
-
+										-- Refuel
 										SetPedAmmo(ped, 883325847, 4500)
+										TriggerServerEvent("weapons:server:UpdateWeaponAmmo", CurrentWeaponData, tonumber(4500))
 									end
 								else
 									DrawText3Ds(stringCoords.x, stringCoords.y, stringCoords.z + 1.2, Config.Strings.NotEnoughCashJerryCan)
